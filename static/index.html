@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人工标注平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .project-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #e1e4e8;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .toolbar {
+            margin-bottom: 20px;
+        }
+        
+        .toolbar button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .toolbar button:hover {
+            background-color: #3a5a80;
+        }
+        
+        .toolbar button.active {
+            background-color: #2c3e50;
+        }
+        
+        .toolbar button.secondary {
+            background-color: #95a5a6;
+        }
+        
+        .toolbar button.success {
+            background-color: #27ae60;
+        }
+        
+        .images-section {
+            margin-bottom: 20px;
+        }
+        
+        .images-section h3 {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .image-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+        }
+        
+        .image-item {
+            display: flex;
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .image-item:hover {
+            background-color: #e8f4fd;
+        }
+        
+        .image-item.active {
+            background-color: #d4e6f1;
+            border-left: 3px solid #4a6fa5;
+        }
+        
+        .image-item .image-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .image-item .image-status {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .labels-section {
+            margin-bottom: 20px;
+        }
+        
+        .labels-section h3 {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .label-list {
+            list-style: none;
+        }
+        
+        .label-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            background-color: #fff;
+            border-radius: 4px;
+            border-left: 4px solid #4a6fa5;
+        }
+        
+        .label-color {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .label-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            margin-left: 5px;
+        }
+        
+        .annotations-section {
+            margin-bottom: 20px;
+        }
+        
+        .annotations-section h3 {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .annotation-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .annotation-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .annotation-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .annotation-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .annotation-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .annotation-coords {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .image-container {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        #annotationCanvas {
+            display: block;
+            background-color: #f9f9f9;
+            cursor: crosshair;
+        }
+        
+        .status-bar {
+            padding: 10px 20px;
+            background-color: #ecf0f1;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            max-width: 90%;
+        }
+        
+        .modal h3 {
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .progress-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e8f4fd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .user-badge {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .header-actions button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .read-only-banner {
+            display: none;
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ffeeba;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .image-item.locked {
+            opacity: 0.7;
+            background-color: #fff8e1;
+        }
+
+        .image-item.locked .image-status {
+            color: #e67e22;
+        }
+
+        .active-users {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">人工标注平台</div>
+            <div class="project-info" id="projectInfo">
+                加载项目信息...
+            </div>
+            <div class="header-actions">
+                <span class="user-badge" id="userBadge">用户: --</span>
+                <button id="saveBtn" class="btn-primary">保存标注</button>
+                <button id="exportBtn" class="btn-primary">导出所有</button>
+            </div>
+        </header>
+
+        <div class="read-only-banner" id="readOnlyBanner">
+            当前图像正在被其他用户标注，您处于只读模式
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="toolbar">
+                    <button id="nextUnannotatedBtn" class="success">下一个未标注</button>
+                    <button id="drawBtn" class="active">绘制边界框</button>
+                    <button id="selectBtn">选择/编辑</button>
+                    <button id="deleteBtn">删除选中</button>
+                    <button id="zoomInBtn">放大</button>
+                    <button id="zoomOutBtn">缩小</button>
+                    <button id="fitBtn">适应窗口</button>
+                </div>
+                
+                <div class="progress-info" id="progressInfo">
+                    加载进度信息...
+                </div>
+                
+                <div class="images-section">
+                    <h3>图像列表</h3>
+                    <div class="image-list" id="imageList">
+                        <!-- 图像列表将动态加载 -->
+                    </div>
+                </div>
+                
+                <div class="labels-section">
+                    <h3>标签管理</h3>
+                    <button id="addLabelBtn" style="width:100%; margin-bottom:15px;">添加新标签</button>
+                    <ul class="label-list" id="labelList">
+                        <!-- 标签将动态添加到这里 -->
+                    </ul>
+                </div>
+                
+                <div class="annotations-section">
+                    <h3>当前标注</h3>
+                    <div class="annotation-list" id="annotationList">
+                        <!-- 标注将动态添加到这里 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <div class="canvas-wrapper">
+                    <canvas id="annotationCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-info">
+                <span id="cursorPos">坐标: (0, 0)</span>
+                <span id="imageInfo" style="margin-left: 20px;"></span>
+            </div>
+            <div class="zoom-info">
+                <span id="zoomLevel">缩放: 100%</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加标签模态框 -->
+    <div id="labelModal" class="modal">
+        <div class="modal-content">
+            <h3>添加新标签</h3>
+            <div class="form-group">
+                <label for="labelName">标签名称</label>
+                <input type="text" id="labelName" placeholder="输入标签名称">
+            </div>
+            <div class="form-group">
+                <label for="labelColor">标签颜色</label>
+                <input type="color" id="labelColor" value="#4a6fa5">
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelLabelBtn" class="btn-secondary">取消</button>
+                <button id="saveLabelBtn" class="btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑标注模态框 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>编辑标注</h3>
+            <div class="form-group">
+                <label for="editLabel">标签</label>
+                <select id="editLabel">
+                    <!-- 标签选项将动态添加 -->
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelEditBtn" class="btn-secondary">取消</button>
+                <button id="saveEditBtn" class="btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canvas = document.getElementById('annotationCanvas');
+        let ctx = canvas.getContext('2d');
+        let currentImage = null;
+        let currentImageFilename = null;
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDrawing = false;
+        let startX, startY;
+        let currentRect = null;
+        let annotations = [];
+        let selectedAnnotation = null;
+        let labels = [];
+        let currentLabel = null;
+        let mode = 'draw';
+        let allImages = [];
+        let isReadOnly = false;
+        let loadedVersion = null;
+        let labelsVersion = null;
+        let heartbeatTimer = null;
+        let refreshTimer = null;
+
+        let sessionId = localStorage.getItem('labelimg_session_id');
+        if (!sessionId) {
+            sessionId = crypto.randomUUID();
+            localStorage.setItem('labelimg_session_id', sessionId);
+        }
+
+        let username = localStorage.getItem('labelimg_username');
+        if (!username) {
+            username = prompt('请输入您的姓名（用于多人协作标识）:', '') || '匿名用户';
+            localStorage.setItem('labelimg_username', username);
+        }
+
+        function apiQuery() {
+            return `session_id=${encodeURIComponent(sessionId)}&username=${encodeURIComponent(username)}`;
+        }
+
+        function setReadOnlyMode(readOnly, lockedBy) {
+            isReadOnly = readOnly;
+            const banner = document.getElementById('readOnlyBanner');
+            banner.style.display = readOnly ? 'block' : 'none';
+            banner.textContent = readOnly
+                ? `当前图像正在被 ${lockedBy || '其他用户'} 标注，您处于只读模式`
+                : '';
+
+            ['drawBtn', 'selectBtn', 'deleteBtn', 'saveBtn', 'addLabelBtn', 'nextUnannotatedBtn'].forEach(id => {
+                document.getElementById(id).disabled = readOnly;
+            });
+
+            canvas.style.cursor = readOnly ? 'not-allowed' : (mode === 'select' ? 'pointer' : 'crosshair');
+        }
+
+        function handleLockLost() {
+            stopHeartbeat();
+            setReadOnlyMode(true, '锁定已过期');
+            alert('您的编辑锁定已失效，请重新点击该图像后再编辑');
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+        }
+
+        function startHeartbeat(filename) {
+            stopHeartbeat();
+            heartbeatTimer = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/heartbeat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename, session_id: sessionId })
+                    });
+                    if (response.status === 409) {
+                        handleLockLost();
+                    }
+                } catch (error) {
+                    console.error('心跳失败:', error);
+                }
+            }, 30000);
+        }
+
+        async function releaseCurrentLock() {
+            if (!currentImageFilename) return;
+            stopHeartbeat();
+            try {
+                await fetch('/api/unlock-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentImageFilename,
+                        session_id: sessionId,
+                        username
+                    })
+                });
+            } catch (error) {
+                console.error('释放锁定失败:', error);
+            }
+        }
+
+        async function acquireImageLock(filename) {
+            const response = await fetch('/api/lock-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, session_id: sessionId, username })
+            });
+
+            if (response.ok) {
+                setReadOnlyMode(false);
+                startHeartbeat(filename);
+                return true;
+            }
+
+            const error = await response.json();
+            const detail = error.detail || {};
+            setReadOnlyMode(true, detail.locked_by || detail.message);
+            return false;
+        }
+
+        async function init() {
+            document.getElementById('userBadge').textContent = `用户: ${username}`;
+
+            document.getElementById('drawBtn').addEventListener('click', () => setMode('draw'));
+            document.getElementById('selectBtn').addEventListener('click', () => setMode('select'));
+            document.getElementById('deleteBtn').addEventListener('click', deleteSelectedAnnotation);
+            document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+            document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+            document.getElementById('fitBtn').addEventListener('click', fitToWindow);
+            document.getElementById('saveBtn').addEventListener('click', saveAnnotations);
+            document.getElementById('exportBtn').addEventListener('click', exportAllAnnotations);
+            document.getElementById('addLabelBtn').addEventListener('click', showLabelModal);
+            document.getElementById('nextUnannotatedBtn').addEventListener('click', loadNextUnannotated);
+            document.getElementById('saveLabelBtn').addEventListener('click', saveLabel);
+            document.getElementById('cancelLabelBtn').addEventListener('click', hideLabelModal);
+            document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+            document.getElementById('cancelEditBtn').addEventListener('click', hideEditModal);
+
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+
+            window.addEventListener('beforeunload', () => {
+                if (currentImageFilename) {
+                    const payload = JSON.stringify({
+                        filename: currentImageFilename,
+                        session_id: sessionId,
+                        username
+                    });
+                    navigator.sendBeacon(
+                        '/api/unlock-image',
+                        new Blob([payload], { type: 'application/json' })
+                    );
+                }
+            });
+
+            await loadLabels();
+            renderLabels();
+            renderAnnotationsList();
+            await loadProjectInfo();
+            await loadImageList();
+
+            refreshTimer = setInterval(async () => {
+                await loadProjectInfo();
+                await refreshImageListStatus();
+            }, 15000);
+        }
+
+        async function loadLabels() {
+            try {
+                const response = await fetch('/api/labels');
+                const data = await response.json();
+                labels = data.labels || [];
+                labelsVersion = data.version || null;
+                if (labels.length > 0) {
+                    currentLabel = labels[0];
+                }
+            } catch (error) {
+                console.error('加载标签失败:', error);
+            }
+        }
+
+        async function saveLabelsToServer(force = false) {
+            try {
+                const response = await fetch('/api/labels', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ labels, version: labelsVersion, force })
+                });
+                const result = await response.json();
+
+                if (response.status === 409 && result.detail && result.detail.conflict) {
+                    const overwrite = confirm('标签已被其他用户修改，是否覆盖保存？');
+                    if (overwrite) {
+                        await saveLabelsToServer(true);
+                    } else {
+                        await loadLabels();
+                        renderLabels();
+                        renderCanvas();
+                        renderAnnotationsList();
+                    }
+                    return;
+                }
+
+                if (response.ok) {
+                    labelsVersion = result.version || labelsVersion;
+                }
+            } catch (error) {
+                console.error('保存标签失败:', error);
+            }
+        }
+        
+        async function loadProjectInfo() {
+            try {
+                const response = await fetch('/api/project-info');
+                const data = await response.json();
+
+                document.getElementById('projectInfo').innerHTML = `
+                    图像: ${data.total_images} |
+                    已标注: ${data.annotated_images} |
+                    标注总数: ${data.total_annotations} |
+                    在线: ${data.active_users} 人 |
+                    锁定: ${data.locked_images} 张
+                `;
+
+                const progressPercent = data.total_images > 0 ?
+                    Math.round((data.annotated_images / data.total_images) * 100) : 0;
+
+                document.getElementById('progressInfo').innerHTML = `
+                    <strong>标注进度:</strong> ${data.annotated_images}/${data.total_images} (${progressPercent}%)<br>
+                    <strong>平均每图:</strong> ${data.total_annotations > 0 ?
+                        (data.total_annotations / Math.max(data.annotated_images, 1)).toFixed(1) : 0} 个标注
+                    <div class="active-users" id="activeUsersInfo">正在加载协作者...</div>
+                `;
+
+                const locksResponse = await fetch('/api/locks');
+                const locksData = await locksResponse.json();
+                const activeUsers = locksData.active_users || [];
+                document.getElementById('activeUsersInfo').textContent = activeUsers.length > 0
+                    ? `当前协作者: ${activeUsers.join('、')}`
+                    : '当前无其他协作者';
+
+            } catch (error) {
+                console.error('加载项目信息失败:', error);
+            }
+        }
+
+        async function loadImageList() {
+            try {
+                const response = await fetch(`/api/images?${apiQuery()}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('imageList').innerHTML =
+                        `<div style="padding: 10px; color: #e74c3c;">错误: ${data.error}</div>`;
+                    return;
+                }
+
+                allImages = data.images;
+                renderImageList(allImages);
+
+                if (allImages.length > 0 && !currentImageFilename) {
+                    await loadImage(allImages[0].filename, allImages[0].url);
+                }
+
+            } catch (error) {
+                console.error('加载图像列表失败:', error);
+                document.getElementById('imageList').innerHTML =
+                    '<div style="padding: 10px; color: #e74c3c;">加载图像列表失败</div>';
+            }
+        }
+
+        async function refreshImageListStatus() {
+            try {
+                const response = await fetch(`/api/images?${apiQuery()}`);
+                const data = await response.json();
+                if (!data.error) {
+                    allImages = data.images;
+                    renderImageList(allImages);
+                }
+            } catch (error) {
+                console.error('刷新图像列表失败:', error);
+            }
+        }
+
+        function getImageStatusText(image) {
+            if (image.locked) {
+                return `🔒 ${image.locked_by}`;
+            }
+            if (image.annotated) {
+                return `已标注 (${image.annotation_count})`;
+            }
+            return '未标注';
+        }
+
+        function renderImageList(images) {
+            const imageList = document.getElementById('imageList');
+            imageList.innerHTML = '';
+
+            if (images.length === 0) {
+                imageList.innerHTML = '<div style="padding: 10px; color: #666;">图像文件夹为空，请将图片放入数据目录</div>';
+                return;
+            }
+
+            images.forEach(image => {
+                const div = document.createElement('div');
+                div.className = 'image-item';
+                if (image.filename === currentImageFilename) {
+                    div.classList.add('active');
+                }
+                if (image.locked) {
+                    div.classList.add('locked');
+                }
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'image-name';
+                nameEl.textContent = image.filename;
+
+                const statusEl = document.createElement('div');
+                statusEl.className = 'image-status';
+                statusEl.textContent = getImageStatusText(image);
+
+                div.appendChild(nameEl);
+                div.appendChild(statusEl);
+
+                div.addEventListener('click', async () => {
+                    await loadImage(image.filename, image.url);
+                    document.querySelectorAll('.image-item').forEach(item => item.classList.remove('active'));
+                    div.classList.add('active');
+                });
+
+                imageList.appendChild(div);
+            });
+        }
+        
+        async function loadNextUnannotated() {
+            try {
+                const current = currentImageFilename ? `&current=${encodeURIComponent(currentImageFilename)}` : '';
+                const response = await fetch(`/api/next-unannotated?${apiQuery()}${current}`);
+                const data = await response.json();
+
+                if (data.filename) {
+                    await loadImage(data.filename, data.url, true);
+                    document.querySelectorAll('.image-item').forEach(item => {
+                        item.classList.remove('active');
+                        const nameEl = item.querySelector('.image-name');
+                        if (nameEl && nameEl.textContent === data.filename) {
+                            item.classList.add('active');
+                        }
+                    });
+                } else if (data.same_image) {
+                    alert(data.message || '当前已是唯一未标注图像');
+                } else {
+                    alert(data.message || '所有图像都已标注');
+                }
+            } catch (error) {
+                console.error('加载下一个未标注图像失败:', error);
+                alert('加载失败');
+            }
+        }
+
+        async function loadImage(filename, url, skipLockRequest = false) {
+            try {
+                if (currentImageFilename && currentImageFilename !== filename) {
+                    await releaseCurrentLock();
+                }
+
+                currentImageFilename = filename;
+
+                if (!skipLockRequest) {
+                    await acquireImageLock(filename);
+                } else {
+                    setReadOnlyMode(false);
+                    startHeartbeat(filename);
+                }
+
+                currentImage = new Image();
+                currentImage.onload = function() {
+                    fitToWindow();
+                    renderCanvas();
+                    document.getElementById('imageInfo').textContent =
+                        `图像: ${filename} (${currentImage.width}×${currentImage.height})`;
+                    loadImageAnnotations(filename);
+                };
+                currentImage.src = url;
+            } catch (error) {
+                console.error('加载图像失败:', error);
+                alert('加载图像失败');
+            }
+        }
+
+        async function loadImageAnnotations(filename) {
+            try {
+                const response = await fetch(
+                    `/api/load-annotations?image_filename=${encodeURIComponent(filename)}&session_id=${encodeURIComponent(sessionId)}`
+                );
+                const data = await response.json();
+
+                loadedVersion = data.version || null;
+                setReadOnlyMode(Boolean(data.read_only), data.locked_by);
+
+                if (data.annotations && data.annotations.length > 0) {
+                    annotations = data.annotations;
+                } else {
+                    annotations = [];
+                }
+                renderAnnotationsList();
+                renderCanvas();
+            } catch (error) {
+                console.error('加载标注失败:', error);
+                annotations = [];
+                renderAnnotationsList();
+            }
+        }
+
+        async function saveAnnotations(force = false) {
+            if (!currentImage) {
+                alert('请先选择图像');
+                return;
+            }
+            if (isReadOnly) {
+                alert('当前为只读模式，无法保存');
+                return;
+            }
+
+            const annotationData = {
+                image: `/api/image/${currentImageFilename}`,
+                annotations,
+                session_id: sessionId,
+                username,
+                version: loadedVersion,
+                force
+            };
+
+            try {
+                const response = await fetch('/api/save-annotations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(annotationData)
+                });
+
+                const result = await response.json();
+
+                if (response.status === 409 && result.detail && result.detail.conflict) {
+                    const overwrite = confirm('其他用户已修改此标注，是否覆盖保存？');
+                    if (overwrite) {
+                        await saveAnnotations(true);
+                    } else {
+                        await loadImageAnnotations(currentImageFilename);
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    const detail = result.detail;
+                    alert(typeof detail === 'string' ? detail : detail.message || '保存失败');
+                    return;
+                }
+
+                loadedVersion = result.version !== undefined ? result.version : loadedVersion;
+                alert(result.message);
+                await loadProjectInfo();
+                await refreshImageListStatus();
+            } catch (error) {
+                console.error('保存标注失败:', error);
+                alert('保存标注失败');
+            }
+        }
+        
+        // 导出所有标注
+        async function exportAllAnnotations() {
+            try {
+                const response = await fetch('/api/export-all');
+                const result = await response.json();
+                alert(result.message);
+            } catch (error) {
+                console.error('导出失败:', error);
+                alert('导出失败');
+            }
+        }
+        
+        // 绘图相关函数（与之前相同）
+        function setMode(newMode) {
+            if (isReadOnly) return;
+
+            mode = newMode;
+            document.getElementById('drawBtn').classList.toggle('active', newMode === 'draw');
+            document.getElementById('selectBtn').classList.toggle('active', newMode === 'select');
+
+            canvas.style.cursor = newMode === 'select' ? 'pointer' : 'crosshair';
+        }
+        
+        function handleMouseDown(e) {
+            if (isReadOnly) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - offsetX) / scale;
+            const y = (e.clientY - rect.top - offsetY) / scale;
+            
+            if (mode === 'draw') {
+                if (!currentLabel) {
+                    alert('请先添加或选择标签');
+                    return;
+                }
+                isDrawing = true;
+                startX = x;
+                startY = y;
+                currentRect = { x: x, y: y, width: 0, height: 0, label: currentLabel };
+            } else if (mode === 'select') {
+                selectedAnnotation = null;
+                for (let i = annotations.length - 1; i >= 0; i--) {
+                    const ann = annotations[i];
+                    if (x >= ann.x && x <= ann.x + ann.width &&
+                        y >= ann.y && y <= ann.y + ann.height) {
+                        selectedAnnotation = ann;
+                        break;
+                    }
+                }
+                
+                if (selectedAnnotation) {
+                    showEditModal();
+                }
+            }
+            
+            renderCanvas();
+        }
+        
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - offsetX) / scale;
+            const y = (e.clientY - rect.top - offsetY) / scale;
+
+            document.getElementById('cursorPos').textContent = `坐标: (${Math.round(x)}, ${Math.round(y)})`;
+
+            if (isReadOnly) return;
+
+            if (isDrawing) {
+                currentRect.width = x - startX;
+                currentRect.height = y - startY;
+                renderCanvas();
+            }
+        }
+        
+        function handleMouseUp(e) {
+            if (isReadOnly) return;
+
+            if (isDrawing && currentRect) {
+                if (currentRect.width < 0) {
+                    currentRect.x += currentRect.width;
+                    currentRect.width = -currentRect.width;
+                }
+                if (currentRect.height < 0) {
+                    currentRect.y += currentRect.height;
+                    currentRect.height = -currentRect.height;
+                }
+                
+                if (currentRect.width > 5 && currentRect.height > 5) {
+                    annotations.push({
+                        id: Date.now(),
+                        x: currentRect.x,
+                        y: currentRect.y,
+                        width: currentRect.width,
+                        height: currentRect.height,
+                        label: currentLabel
+                    });
+                    renderAnnotationsList();
+                }
+                
+                isDrawing = false;
+                currentRect = null;
+                renderCanvas();
+            }
+        }
+        
+        function renderCanvas() {
+            if (!currentImage) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+            ctx.drawImage(currentImage, 0, 0);
+            
+            annotations.forEach(ann => {
+                const isSelected = ann === selectedAnnotation;
+                ctx.strokeStyle = ann.label.color;
+                ctx.lineWidth = isSelected ? 3 : 2;
+                ctx.setLineDash(isSelected ? [5, 5] : []);
+                ctx.strokeRect(ann.x, ann.y, ann.width, ann.height);
+                
+                ctx.fillStyle = ann.label.color;
+                ctx.fillRect(ann.x, ann.y - 20, ctx.measureText(ann.label.name).width + 10, 20);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.fillText(ann.label.name, ann.x + 5, ann.y - 5);
+            });
+            
+            if (isDrawing && currentRect && currentLabel) {
+                ctx.strokeStyle = currentLabel.color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+                
+                ctx.fillStyle = currentLabel.color;
+                ctx.fillRect(currentRect.x, currentRect.y - 20, ctx.measureText(currentLabel.name).width + 10, 20);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.fillText(currentLabel.name, currentRect.x + 5, currentRect.y - 5);
+            }
+            
+            ctx.restore();
+        }
+        
+        function renderLabels() {
+            const labelList = document.getElementById('labelList');
+            labelList.innerHTML = '';
+            
+            labels.forEach(label => {
+                const li = document.createElement('li');
+                li.className = 'label-item';
+                li.innerHTML = `
+                    <div>
+                        <span class="label-color" style="background-color: ${label.color}"></span>
+                        <span>${label.name}</span>
+                    </div>
+                    <div class="label-actions">
+                        <button class="edit-label" data-id="${label.id}">编辑</button>
+                        <button class="delete-label" data-id="${label.id}">删除</button>
+                    </div>
+                `;
+                labelList.appendChild(li);
+                
+                li.querySelector('.edit-label').addEventListener('click', () => editLabel(label.id));
+                li.querySelector('.delete-label').addEventListener('click', () => deleteLabel(label.id));
+                
+                li.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('edit-label') && 
+                        !e.target.classList.contains('delete-label')) {
+                        currentLabel = label;
+                        document.querySelectorAll('.label-item').forEach(item => {
+                            item.style.backgroundColor = '';
+                        });
+                        li.style.backgroundColor = '#e8f4fd';
+                    }
+                });
+            });
+            
+            if (labels.length > 0) {
+                labelList.firstChild.style.backgroundColor = '#e8f4fd';
+            }
+        }
+        
+        function renderAnnotationsList() {
+            const annotationList = document.getElementById('annotationList');
+            annotationList.innerHTML = '';
+            
+            annotations.forEach(ann => {
+                const div = document.createElement('div');
+                div.className = 'annotation-item';
+                div.innerHTML = `
+                    <div class="annotation-info">
+                        <span class="annotation-label" style="color: ${ann.label.color}">${ann.label.name}</span>
+                        <span class="annotation-coords">(${Math.round(ann.x)}, ${Math.round(ann.y)}) - (${Math.round(ann.x + ann.width)}, ${Math.round(ann.y + ann.height)})</span>
+                    </div>
+                    <div>
+                        <button class="delete-annotation" data-id="${ann.id}">删除</button>
+                    </div>
+                `;
+                annotationList.appendChild(div);
+                
+                div.querySelector('.delete-annotation').addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    if (isReadOnly) return;
+                    annotations = annotations.filter(a => a.id !== ann.id);
+                    renderAnnotationsList();
+                    renderCanvas();
+                });
+                
+                div.addEventListener('click', () => {
+                    selectedAnnotation = ann;
+                    renderCanvas();
+                });
+            });
+        }
+        
+        function zoomIn() {
+            scale *= 1.2;
+            updateZoomInfo();
+            renderCanvas();
+        }
+        
+        function zoomOut() {
+            scale /= 1.2;
+            updateZoomInfo();
+            renderCanvas();
+        }
+        
+        function fitToWindow() {
+            if (!currentImage) return;
+            
+            const container = document.querySelector('.image-container');
+            const containerWidth = container.clientWidth - 40;
+            const containerHeight = container.clientHeight - 40;
+            
+            const imageRatio = currentImage.width / currentImage.height;
+            const containerRatio = containerWidth / containerHeight;
+            
+            if (imageRatio > containerRatio) {
+                scale = containerWidth / currentImage.width;
+            } else {
+                scale = containerHeight / currentImage.height;
+            }
+            
+            canvas.width = currentImage.width * scale;
+            canvas.height = currentImage.height * scale;
+            
+            offsetX = 0;
+            offsetY = 0;
+            
+            updateZoomInfo();
+            renderCanvas();
+        }
+        
+        function updateZoomInfo() {
+            document.getElementById('zoomLevel').textContent = `缩放: ${Math.round(scale * 100)}%`;
+        }
+        
+        // 标签管理功能
+        function showLabelModal() {
+            document.getElementById('labelModal').style.display = 'flex';
+            document.getElementById('labelName').value = '';
+            document.getElementById('labelColor').value = '#4a6fa5';
+        }
+        
+        function hideLabelModal() {
+            document.getElementById('labelModal').style.display = 'none';
+        }
+        
+        function saveLabel() {
+            if (isReadOnly) return;
+
+            const name = document.getElementById('labelName').value.trim();
+            const color = document.getElementById('labelColor').value;
+
+            if (!name) {
+                alert('请输入标签名称');
+                return;
+            }
+
+            const nextId = labels.length > 0 ? Math.max(...labels.map(item => item.id)) + 1 : 0;
+            labels.push({ id: nextId, name, color });
+            currentLabel = labels[labels.length - 1];
+
+            renderLabels();
+            saveLabelsToServer();
+            hideLabelModal();
+        }
+
+        function editLabel(id) {
+            if (isReadOnly) return;
+
+            const label = labels.find(item => item.id === id);
+            if (!label) return;
+
+            const newName = prompt('输入新标签名称:', label.name);
+            if (newName) {
+                label.name = newName;
+                renderLabels();
+                renderCanvas();
+                renderAnnotationsList();
+                saveLabelsToServer();
+            }
+        }
+
+        function deleteLabel(id) {
+            if (isReadOnly) return;
+
+            if (confirm('确定要删除这个标签吗？')) {
+                labels = labels.filter(item => item.id !== id);
+                annotations = annotations.filter(item => item.label.id !== id);
+                if (currentLabel && currentLabel.id === id) {
+                    currentLabel = labels[0] || null;
+                }
+                renderLabels();
+                renderCanvas();
+                renderAnnotationsList();
+                saveLabelsToServer();
+            }
+        }
+        
+        function showEditModal() {
+            if (!selectedAnnotation || isReadOnly) return;
+            
+            const editLabelSelect = document.getElementById('editLabel');
+            editLabelSelect.innerHTML = '';
+            
+            labels.forEach(label => {
+                const option = document.createElement('option');
+                option.value = label.id;
+                option.textContent = label.name;
+                if (label.id === selectedAnnotation.label.id) {
+                    option.selected = true;
+                }
+                editLabelSelect.appendChild(option);
+            });
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        
+        function hideEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            selectedAnnotation = null;
+            renderCanvas();
+        }
+        
+        function saveEdit() {
+            if (!selectedAnnotation || isReadOnly) return;
+            
+            const labelId = parseInt(document.getElementById('editLabel').value);
+            const label = labels.find(l => l.id === labelId);
+            
+            if (label) {
+                selectedAnnotation.label = label;
+                renderCanvas();
+                renderAnnotationsList();
+            }
+            
+            hideEditModal();
+        }
+        
+        function deleteSelectedAnnotation() {
+            if (isReadOnly) return;
+
+            if (selectedAnnotation) {
+                annotations = annotations.filter(a => a !== selectedAnnotation);
+                selectedAnnotation = null;
+                renderCanvas();
+                renderAnnotationsList();
+            }
+        }
+        
+        // 初始化应用
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

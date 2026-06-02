@@ -1,0 +1,9 @@
+[project]
+name = "web-labelimg-backend"
+version = "2.0.0"
+description = "Web LabelImg 2.0 API"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
